@@ -400,6 +400,21 @@ function closed_period_for(?string $date): ?string
 }
 
 // ───────────── Resource hooks ─────────────
+/**
+ * Why $coordId can't be the coordinator of employee $selfId (null = it can). Linked by employee code only.
+ * $endDateOverride: the coordinator's end date as it will be after the same save/import (false = use the stored one).
+ * Used by the employee form and the Excel import, so both apply the same rule.
+ */
+function coordinator_problem(int $coordId, ?int $selfId, string|null|false $endDateOverride = false): ?string
+{
+    if ($selfId !== null && $coordId === $selfId) return __('الموظف مينفعش يكون منسق لنفسه.');
+    $c = q_one('SELECT id, end_date FROM employees WHERE id = ?', [$coordId]);
+    if (!$c) return __('كود المنسق %d مش موجود.', $coordId);
+    $end = $endDateOverride === false ? $c['end_date'] : $endDateOverride;
+    if ($end !== null && $end !== '' && $end < date('Y-m-d')) return __('المنسق %d خدمته منتهية (مش نشط).', $coordId);
+    return null;
+}
+
 function hook_employees_validate(array &$data, array &$errors, ?array $old): void
 {
     if ($old === null) {
@@ -418,6 +433,16 @@ function hook_employees_validate(array &$data, array &$errors, ?array $old): voi
     }
     // The bank only means something for card (فيزا) pay.
     if (array_key_exists('bank_id', $data) && ($data['pay_method'] ?? null) !== 'visa') $data['bank_id'] = null;
+    if (array_key_exists('coordinator_id', $data)) {
+        $oldCoord = $old['coordinator_id'] ?? null;
+        // The picker lists only employees in the user's scope: an out-of-scope coordinator shows as empty, so keep it.
+        if ($data['coordinator_id'] === null && $oldCoord !== null && !can_see_employee((int)$oldCoord)) $data['coordinator_id'] = (int)$oldCoord;
+        $selfId = isset($old['id']) ? (int)$old['id'] : (isset($data['id']) ? (int)$data['id'] : null);
+        if ($data['coordinator_id'] !== null && ((int)$data['coordinator_id'] === $selfId || (string)$data['coordinator_id'] !== (string)$oldCoord)
+            && ($p = coordinator_problem((int)$data['coordinator_id'], $selfId))) {
+            $errors['coordinator_id'] = $p;
+        }
+    }
 }
 
 function hook_employees_after(int $id, array $data, ?array $old, array $diff): void

@@ -751,3 +751,8 @@ UPDATE employees e JOIN specializations s ON s.name = TRIM(e.specialization) SET
 UPDATE employees SET specialization = NULL WHERE specialization_id IS NOT NULL AND specialization IS NOT NULL;
 -- the profile field is now specialization_id (seed.sql adds it with the same defaults)
 DELETE FROM employee_field_permissions WHERE field = 'specialization';
+
+-- Coordinator (المنسق): the employee responsible for coordinating this one, by employee code.
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS coordinator_id INT UNSIGNED NULL AFTER job_title_id;
+ALTER TABLE employees ADD KEY IF NOT EXISTS idx_coordinator (coordinator_id);
+ALTER TABLE employees ADD CONSTRAINT fk_emp_coordinator FOREIGN KEY IF NOT EXISTS (coordinator_id) REFERENCES employees(id) ON DELETE SET NULL;

@@ -22,6 +22,7 @@ return [
             'department_id'     => ['label' => 'القسم', 'type' => 'fk', 'fk' => ['departments', 'name'], 'fk_active' => true],
             'specialization_id' => ['label' => 'التخصص', 'type' => 'fk', 'fk' => ['specializations', 'name'], 'fk_active' => true, 'hint' => 'التخصصات بتتضاف من صفحة «التخصصات»'],
             'job_title_id'      => ['label' => 'المسمى الوظيفي', 'type' => 'fk', 'fk' => ['job_titles', 'name'], 'fk_active' => true],
+            'coordinator_id'    => ['label' => 'المنسق', 'type' => 'employee', 'hint' => 'الموظف المسؤول عن التنسيق (بالكود)'],
             'hire_date'         => ['label' => 'تاريخ التعيين', 'type' => 'date'],
             'end_date'          => ['label' => 'تاريخ نهاية الخدمة', 'type' => 'date'],
             'attendance_exempt' => ['label' => 'معفى من البصمة', 'type' => 'bool'],

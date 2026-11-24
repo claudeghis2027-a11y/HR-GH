@@ -1595,4 +1595,15 @@ return [
     'إدارة التخصصات' => 'Manage specializations',
     'اسم التخصص الجديد' => 'New specialization name',
     'إضافة تخصص' => 'Add specialization',
+
+    // ── Employee coordinator (المنسق)
+    'المنسق' => 'Coordinator',
+    'هيتشال' => 'Will be removed',
+    'الموظف مينفعش يكون منسق لنفسه.' => 'An employee cannot be their own coordinator.',
+    'كود المنسق %d مش موجود.' => 'Coordinator employee ID %d does not exist.',
+    'المنسق %d خدمته منتهية (مش نشط).' => 'Coordinator %d is no longer active (service ended).',
+    'اكتب كود الموظف المنسق (رقم) مش الاسم، ومينفعش يكون نفس كود الموظف. اكتب - عشان تشيل المنسق.' => 'Enter the coordinator\'s employee ID (a number), not the name, and not the employee\'s own ID. Enter - to remove the coordinator.',
+    'Coordinator Employee ID لازم يكون كود موظف (رقم) مش اسم: "%s".' => 'Coordinator Employee ID must be an employee ID (a number), not a name: "%s".',
+    'صف %d: %s ارفع الملف تاني.' => 'Row %d: %s Upload the file again.',
+    'الموظف المسؤول عن التنسيق (بالكود)' => 'The employee responsible for coordination (by employee ID)',
 ];
