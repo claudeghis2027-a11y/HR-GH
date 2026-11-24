@@ -13,6 +13,7 @@ const EMP_COLS = [
     'department'    => 'القسم',
     'specialization' => 'التخصص',
     'job_title'     => 'المسمى الوظيفي',
+    'coordinator'   => 'Coordinator Employee ID',
     'hire_date'     => 'تاريخ التعيين',
     'end_date'      => 'تاريخ نهاية الخدمة',
     'exempt'        => 'معفى يدويًا من البصمة؟ (نعم/لا)',
@@ -42,6 +43,7 @@ const EMP_NOTES = [
     'name_ar'      => 'إلزامي لموظف جديد.',
     'name_en'      => 'زي ما هو مكتوب في برنامج البصمة.',
     'specialization' => 'بيتختار من القائمة. التخصصات بتتضاف من صفحة «التخصصات».',
+    'coordinator'  => 'كود الموظف المنسق (Employee ID) مش الاسم. لازم يكون موظف نشط ومش نفس الموظف. فاضي = المنسق الحالي يفضل زي ما هو. اكتب - عشان تشيل المنسق.',
     'hire_date'    => 'مثلًا 2026-10-01 أو 1/10/2026.',
     'end_date'     => 'سيبه فاضي لو الموظف لسه شغال.',
     'phone'        => 'بالصفر في الأول، مثلًا 01012345678.',
@@ -82,6 +84,7 @@ function emp_template_file(bool $filled): string
                         LEFT JOIN banks b ON b.id = e.bank_id WHERE $w ORDER BY e.id", $p) as $e) {
             $b = $withSalary ? current_basic((int)$e['id']) : null;
             $v = ['id' => (string)$e['id'], 'name_ar' => $e['name_ar'], 'name_en' => $e['name_en'], 'department' => $e['dept'], 'specialization' => $e['spec'], 'job_title' => $e['job'],
+                  'coordinator' => $e['coordinator_id'] !== null ? (string)$e['coordinator_id'] : '',
                   'hire_date' => $e['hire_date'], 'end_date' => $e['end_date'], 'exempt' => $e['attendance_exempt'] ? 'نعم' : 'لا', 'nationality' => $e['nationality'],
                   'phone' => $e['phone'], 'pay_method' => ['cash' => 'كاش', 'visa' => 'فيزا'][$e['pay_method'] ?? ''] ?? '', 'bank' => $e['pay_method'] === 'visa' ? $e['bank'] : '', 'papers' => $e['papers_received'] ? 'نعم' : 'لا',
                   'summer' => $e['summer_deduction'], 'first_year' => $e['first_year_deduction'], 'first_raise' => $e['first_raise_month'] ? substr($e['first_raise_month'], 0, 10) : '',
@@ -130,6 +133,10 @@ function emp_template_file(bool $filled): string
     $rules[] = ['ref' => "{$A}2:{$A}$last", 'custom' => "AND(ISNUMBER(--{$A}2),--{$A}2>=1,INT(--{$A}2)=--{$A}2,COUNTIF(\${$A}\$2:\${$A}\$$last,{$A}2)=1)",
                 'title' => EMP_COLS['id'], 'error' => __('كود الموظف لازم يكون رقم صحيح ومايتكررش في الملف.'), 'prompt' => EMP_NOTES['id']];
     $ruled['id'] = true;
+    $C = $col('coordinator');
+    $rules[] = ['ref' => "{$C}2:{$C}$last", 'custom' => "OR({$C}2=\"-\",AND(ISNUMBER(--{$C}2),--{$C}2>=1,INT(--{$C}2)=--{$C}2,--{$C}2<>--{$A}2))",
+                'title' => EMP_COLS['coordinator'], 'error' => __('اكتب كود الموظف المنسق (رقم) مش الاسم، ومينفعش يكون نفس كود الموظف. اكتب - عشان تشيل المنسق.'), 'prompt' => EMP_NOTES['coordinator']];
+    $ruled['coordinator'] = true;
     foreach (EMP_NOTES as $k => $note) if (!isset($ruled[$k])) $rules[] = ['ref' => $col($k) . '2:' . $col($k) . $last, 'title' => mb_substr(EMP_COLS[$k], 0, 32), 'prompt' => $note];
     $help = [['تعليمات'],
         ['كل صف = موظف. "الاسم بالعربي" إلزامي.'],
@@ -144,10 +151,11 @@ function emp_template_file(bool $filled): string
         ['حط الماوس على أي خانة عشان تشوف شرحها.'],
         ['الراتب الأساسي: لو اتغير، القيمة القديمة بتتقفل يوم قبل "تاريخ بدء الراتب" (الافتراضي أول الشهر الحالي) وبتتسجل الجديدة.'],
         ['الصلاحية: لو مكتوبة، بيتعمل للموظف حساب دخول (اسم المستخدم = الكود) أو بتتغير صلاحية حسابه. للسوبر أدمن بس.'],
+        ['Coordinator Employee ID: كود الموظف المنسق (مش اسمه). لازم يكون موظف موجود ونشط، ومينفعش الموظف يكون منسق لنفسه. فاضي = المنسق الحالي يفضل زي ما هو، و - = شيل المنسق.'],
         ['خلية فاضية = سيب القيمة الحالية زي ما هي.'],
     ];
     $x = new XlsxWriter();
-    $x->addSheet(EMP_SHEET, $rows, [12, 26, 30, 18, 18, 18, 14, 16, 20, 14, 16, 18, 20, 22, 12, 16, 16, 18, 14, 16, 18], $rules);
+    $x->addSheet(EMP_SHEET, $rows, [12, 26, 30, 18, 18, 18, 16, 14, 16, 20, 14, 16, 18, 20, 22, 12, 16, 16, 18, 14, 16, 18], $rules);
     $x->addSheet('القوائم', $lists, [22, 22, 22, 22, 10, 14, 22, 14, 12, 16, 22]);
     $x->addSheet('تعليمات', $help, [110]);
     $file = tempnam(emp_import_dir(), 'tpl');
@@ -193,6 +201,15 @@ function emp_import_parse(string $file): array
     $scope = dept_scope();
     $canSalary = can('salary', 'create');
     $out = []; $errors = []; $warnings = []; $seen = [];
+    // A coordinator whose own row in this file ends his service is checked against that new end date.
+    $fileEnd = [];
+    if (isset($idx['coordinator'], $idx['end_date'], $idx['id'])) {
+        foreach ($raw as $r) {
+            $rid = trim((string)($r[$idx['id']] ?? ''));
+            $d = xl_date($r[$idx['end_date']] ?? '');
+            if (preg_match('/^\d{1,9}(\.0+)?$/', $rid) && is_string($d)) $fileEnd[(int)$rid] = $d;
+        }
+    }
     $stats = ['new' => 0, 'update' => 0, 'same' => 0, 'salary' => 0, 'accounts' => 0];
 
     foreach ($raw as $n => $r) {
@@ -288,6 +305,18 @@ function emp_import_parse(string $file): array
             else $role = (int)$roles[mb_strtolower($roleName)]['id'];
         }
 
+        // Coordinator: linked by employee code only. Column missing (older file) = assignments left as they are.
+        if (isset($idx['coordinator'])) {
+            $cv = $get('coordinator');
+            $cv = is_float($cv) || is_int($cv) ? (string)$cv : trim((string)$cv);
+            if ($cv === '-') $f['coordinator_id'] = null;
+            elseif ($cv !== '') {
+                if (!preg_match('/^\d{1,9}(\.0+)?$/', $cv) || (int)$cv < 1) $err[] = __('Coordinator Employee ID لازم يكون كود موظف (رقم) مش اسم: "%s".', $cv);
+                elseif ($p = coordinator_problem((int)$cv, $id, array_key_exists((int)$cv, $fileEnd) ? $fileEnd[(int)$cv] : false)) $err[] = $p;
+                else $f['coordinator_id'] = (int)$cv;
+            }
+        }
+
         if ($err) { $errors[$rowNo] = $err; continue; }
         $changes = [];
         if ($existing) foreach ($f as $k => $v) { if ((string)($existing[$k] ?? '') !== (string)$v) $changes[$k] = $v; }
@@ -300,7 +329,10 @@ function emp_import_parse(string $file): array
         $stats[$existing ? 'update' : 'new']++;
         if ($salary) $stats['salary']++;
         if ($role !== null) $stats['accounts']++;
-        $out[] = ['row' => $rowNo, 'id' => $id, 'is_new' => !$existing, 'name' => $f['name_ar'] ?? $existing['name_ar'], 'changes' => $changes, 'salary' => $salary, 'role' => $role];
+        $coordId = array_key_exists('coordinator_id', $f) ? $f['coordinator_id'] : ($existing['coordinator_id'] ?? null);
+        $coord = ['id' => $coordId, 'name' => $coordId !== null ? (string)q_val('SELECT name_ar FROM employees WHERE id = ?', [$coordId]) : null,
+                  'changed' => array_key_exists('coordinator_id', $changes), 'cleared' => array_key_exists('coordinator_id', $changes) && $coordId === null];
+        $out[] = ['row' => $rowNo, 'id' => $id, 'is_new' => !$existing, 'name' => $f['name_ar'] ?? $existing['name_ar'], 'changes' => $changes, 'salary' => $salary, 'role' => $role, 'coordinator' => $coord];
     }
     return ['rows' => $out, 'errors' => $errors, 'warnings' => $warnings, 'stats' => $stats];
 }
@@ -318,6 +350,9 @@ function emp_import_apply(array $plan, string $tempPassword): array
     try {
         foreach ($plan as $r) {
             $id = $r['id'];
+            // The coordinator may have left or been removed since the preview: fail the whole import, change nothing.
+            if (($r['changes']['coordinator_id'] ?? null) !== null && ($p = coordinator_problem((int)$r['changes']['coordinator_id'], $id)))
+                throw new RuntimeException(__('صف %d: %s ارفع الملف تاني.', $r['row'], $p));
             if ($r['is_new']) {
                 if ($id === null) $id = (int)q_val('SELECT COALESCE(MAX(id), 0) + 1 FROM employees');
                 elseif (q_val('SELECT 1 FROM employees WHERE id = ?', [$id])) throw new RuntimeException(__('الكود %d اتضاف من وقت المعاينة؛ ارفع الملف تاني.', $id));

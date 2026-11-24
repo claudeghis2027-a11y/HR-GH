@@ -42,12 +42,14 @@
   <?php endif; ?>
 
   <?php if ($res['rows']): ?>
-    <?php $colLabels = ['name_ar' => 'الاسم بالعربي', 'name_en' => 'الاسم بالإنجليزي', 'department_id' => 'القسم', 'specialization_id' => 'التخصص', 'job_title_id' => 'المسمى الوظيفي', 'hire_date' => 'تاريخ التعيين', 'end_date' => 'تاريخ نهاية الخدمة', 'attendance_exempt' => 'معفى من البصمة', 'nationality' => 'الجنسية', 'phone' => 'رقم التليفون', 'pay_method' => 'طريقة القبض', 'bank_id' => 'البنك', 'papers_received' => 'استلم أوراقه', 'summer_deduction' => 'خصم الصيف', 'first_year_deduction' => 'خصم السنة الأولى', 'first_raise_month' => 'شهر أول علاوة مستحقة', 'first_year_exception' => 'استثناء خصم السنة الأولى']; ?>
-    <div class="table-wrap"><table class="small"><thead><tr><th><?= e(__('الصف')) ?></th><th><?= e(__('الكود')) ?></th><th><?= e(__('الاسم')) ?></th><th><?= e(__('العملية')) ?></th><th><?= e(__('الحقول المتغيرة')) ?></th><th><?= e(__('الراتب')) ?></th></tr></thead><tbody>
+    <?php $colLabels = ['name_ar' => 'الاسم بالعربي', 'name_en' => 'الاسم بالإنجليزي', 'department_id' => 'القسم', 'specialization_id' => 'التخصص', 'job_title_id' => 'المسمى الوظيفي', 'coordinator_id' => 'المنسق', 'hire_date' => 'تاريخ التعيين', 'end_date' => 'تاريخ نهاية الخدمة', 'attendance_exempt' => 'معفى من البصمة', 'nationality' => 'الجنسية', 'phone' => 'رقم التليفون', 'pay_method' => 'طريقة القبض', 'bank_id' => 'البنك', 'papers_received' => 'استلم أوراقه', 'summer_deduction' => 'خصم الصيف', 'first_year_deduction' => 'خصم السنة الأولى', 'first_raise_month' => 'شهر أول علاوة مستحقة', 'first_year_exception' => 'استثناء خصم السنة الأولى']; ?>
+    <div class="table-wrap"><table class="small"><thead><tr><th><?= e(__('الصف')) ?></th><th><?= e(__('الكود')) ?></th><th><?= e(__('الاسم')) ?></th><th><?= e(__('العملية')) ?></th><th><?= e(__('الحقول المتغيرة')) ?></th><th><?= e(__('المنسق')) ?></th><th><?= e(__('الراتب')) ?></th></tr></thead><tbody>
       <?php foreach ($res['rows'] as $r): ?>
         <tr><td class="num"><?= (int)$r['row'] ?></td><td><?= $r['id'] === null ? e(__('تلقائي')) : (int)$r['id'] ?></td><td><?= e($r['name']) ?></td>
           <td><span class="badge <?= $r['is_new'] ? 'green' : 'blue' ?>"><?= e(__($r['is_new'] ? 'إضافة' : 'تحديث')) ?></span></td>
           <td><?= e(implode('، ', array_map(fn($k) => __($colLabels[$k] ?? $k), array_keys($r['changes'])))) ?><?= $r['role'] !== null ? ' + ' . e(__('صلاحية')) : '' ?></td>
+          <?php $c = $r['coordinator'] ?? null; ?>
+          <td><?php if ($c && $c['id'] !== null): ?><?= $c['changed'] ? '<strong>' : '' ?><?= (int)$c['id'] ?> - <?= e((string)$c['name']) ?><?= $c['changed'] ? '</strong> <span class="badge blue">' . e(__('جديد')) . '</span>' : '' ?><?php elseif ($c && $c['cleared']): ?><span class="badge"><?= e(__('هيتشال')) ?></span><?php else: ?>—<?php endif; ?></td>
           <td class="num"><?= $r['salary'] ? e(__('%s من %s', money($r['salary']['amount']), $r['salary']['from'])) : '' ?></td></tr>
       <?php endforeach; ?>
     </tbody></table></div>
